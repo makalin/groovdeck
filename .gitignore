@@ -1,0 +1,70 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+bin/
+lib/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.user
+*.suo
+*.sln.docstates
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# JUCE specific
+JuceLibraryCode/
+JUCE/
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# Dependencies
+deps/
+vendor/
+
+# Project specific
+*.wav
+*.mp3
+*.aif
+*.aiff
+*.ogg
+*.flac 
