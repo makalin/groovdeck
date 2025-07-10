@@ -1,7 +1,9 @@
 #include "MainComponent.h"
 
 MainComponent::MainComponent()
-    : effectsPanel(audioEngine)
+    : effectsPanel(audioEngine),
+      liveLoopPanel(audioEngine.getLiveLooper()),
+      sequencerPanel(audioEngine.getSequencer())
 {
     // Initialize buttons
     loadButton.setButtonText("Load Audio");
@@ -23,6 +25,8 @@ MainComponent::MainComponent()
     addAndMakeVisible(volumeSlider);
     addAndMakeVisible(volumeLabel);
     addAndMakeVisible(effectsPanel);
+    addAndMakeVisible(liveLoopPanel);
+    addAndMakeVisible(sequencerPanel);
     
     // Add listeners
     loadButton.addListener(this);
@@ -31,7 +35,7 @@ MainComponent::MainComponent()
     loopButton.addListener(this);
     volumeSlider.addListener(this);
     
-    setSize(800, 800); // Increased height to accommodate effects panel
+    setSize(1200, 1000); // Increased size to accommodate all panels
 }
 
 MainComponent::~MainComponent()
@@ -55,19 +59,28 @@ void MainComponent::resized()
     auto buttonHeight = 40;
     auto margin = 10;
     
-    // Layout transport controls
-    auto transportArea = area.removeFromTop(buttonHeight * 5);
-    loadButton.setBounds(transportArea.removeFromTop(buttonHeight).reduced(margin));
-    playButton.setBounds(transportArea.removeFromTop(buttonHeight).reduced(margin));
-    stopButton.setBounds(transportArea.removeFromTop(buttonHeight).reduced(margin));
-    loopButton.setBounds(transportArea.removeFromTop(buttonHeight).reduced(margin));
+    // Transport controls at the top
+    auto transportArea = area.removeFromTop(buttonHeight * 2).reduced(margin);
+    loadButton.setBounds(transportArea.removeFromTop(buttonHeight).reduced(5));
+    playButton.setBounds(transportArea.removeFromLeft(transportArea.getWidth() / 4).reduced(5));
+    stopButton.setBounds(transportArea.removeFromLeft(transportArea.getWidth() / 3).reduced(5));
+    loopButton.setBounds(transportArea.removeFromLeft(transportArea.getWidth() / 2).reduced(5));
     
-    auto volumeArea = transportArea.removeFromTop(buttonHeight).reduced(margin);
+    auto volumeArea = transportArea.removeFromTop(buttonHeight).reduced(5);
     volumeLabel.setBounds(volumeArea.removeFromLeft(100));
     volumeSlider.setBounds(volumeArea);
     
-    // Layout effects panel
-    effectsPanel.setBounds(area.reduced(margin));
+    // Split remaining area into panels
+    auto panelHeight = area.getHeight() / 3;
+    
+    // Effects panel
+    effectsPanel.setBounds(area.removeFromTop(panelHeight).reduced(margin));
+    
+    // Live loop panel
+    liveLoopPanel.setBounds(area.removeFromTop(panelHeight).reduced(margin));
+    
+    // Sequencer panel
+    sequencerPanel.setBounds(area.reduced(margin));
 }
 
 void MainComponent::buttonClicked(juce::Button* button)

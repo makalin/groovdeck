@@ -2,6 +2,8 @@
 
 #include <JuceHeader.h>
 #include "EffectsProcessor.h"
+#include "LiveLooper.h"
+#include "Sequencer.h"
 
 class AudioEngine : public juce::AudioSource
 {
@@ -29,6 +31,12 @@ public:
     void setEffectsEnabled(bool enabled) { effectsProcessor.setEffectEnabled(enabled); }
     bool isEffectsEnabled() const { return effectsProcessor.isEffectEnabled(); }
 
+    // Live looper access
+    LiveLooper& getLiveLooper() { return liveLooper; }
+    
+    // Sequencer access
+    Sequencer& getSequencer() { return sequencer; }
+
 private:
     std::unique_ptr<juce::AudioFormatReader> audioFileReader;
     std::unique_ptr<juce::AudioFormatReaderSource> audioSource;
@@ -36,6 +44,8 @@ private:
     juce::AudioFormatManager formatManager;
     juce::AudioDeviceManager deviceManager;
     EffectsProcessor effectsProcessor;
+    LiveLooper liveLooper;
+    Sequencer sequencer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 }; 

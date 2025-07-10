@@ -2,6 +2,9 @@
 
 #include <JuceHeader.h>
 #include "AudioEngine.h"
+#include "EffectsPanel.h"
+#include "LiveLoopPanel.h"
+#include "SequencerPanel.h"
 
 class MainComponent : public juce::Component,
                      public juce::Button::Listener,
@@ -18,6 +21,9 @@ public:
 
 private:
     AudioEngine audioEngine;
+    EffectsPanel effectsPanel;
+    LiveLoopPanel liveLoopPanel;
+    SequencerPanel sequencerPanel;
     
     juce::TextButton loadButton;
     juce::TextButton playButton;
