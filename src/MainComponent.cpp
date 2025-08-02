@@ -3,7 +3,8 @@
 MainComponent::MainComponent()
     : effectsPanel(audioEngine),
       liveLoopPanel(audioEngine.getLiveLooper()),
-      sequencerPanel(audioEngine.getSequencer())
+      sequencerPanel(audioEngine.getSequencer()),
+      sampleSlicerPanel(audioEngine.getSampleSlicer())
 {
     // Initialize buttons
     loadButton.setButtonText("Load Audio");
@@ -27,6 +28,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(effectsPanel);
     addAndMakeVisible(liveLoopPanel);
     addAndMakeVisible(sequencerPanel);
+    addAndMakeVisible(sampleSlicerPanel);
     
     // Add listeners
     loadButton.addListener(this);
@@ -35,7 +37,7 @@ MainComponent::MainComponent()
     loopButton.addListener(this);
     volumeSlider.addListener(this);
     
-    setSize(1200, 1000); // Increased size to accommodate all panels
+    setSize(1400, 1200); // Increased size to accommodate all panels
 }
 
 MainComponent::~MainComponent()
@@ -70,17 +72,18 @@ void MainComponent::resized()
     volumeLabel.setBounds(volumeArea.removeFromLeft(100));
     volumeSlider.setBounds(volumeArea);
     
-    // Split remaining area into panels
-    auto panelHeight = area.getHeight() / 3;
+    // Split remaining area into panels (2x2 grid)
+    auto panelHeight = area.getHeight() / 2;
+    auto panelWidth = area.getWidth() / 2;
     
-    // Effects panel
-    effectsPanel.setBounds(area.removeFromTop(panelHeight).reduced(margin));
+    // Top row: Effects and Live Loop
+    auto topRow = area.removeFromTop(panelHeight);
+    effectsPanel.setBounds(topRow.removeFromLeft(panelWidth).reduced(margin));
+    liveLoopPanel.setBounds(topRow.reduced(margin));
     
-    // Live loop panel
-    liveLoopPanel.setBounds(area.removeFromTop(panelHeight).reduced(margin));
-    
-    // Sequencer panel
-    sequencerPanel.setBounds(area.reduced(margin));
+    // Bottom row: Sequencer and Sample Slicer
+    sequencerPanel.setBounds(area.removeFromLeft(panelWidth).reduced(margin));
+    sampleSlicerPanel.setBounds(area.reduced(margin));
 }
 
 void MainComponent::buttonClicked(juce::Button* button)

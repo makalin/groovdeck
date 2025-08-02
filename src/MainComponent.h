@@ -5,6 +5,7 @@
 #include "EffectsPanel.h"
 #include "LiveLoopPanel.h"
 #include "SequencerPanel.h"
+#include "SampleSlicerPanel.h"
 
 class MainComponent : public juce::Component,
                      public juce::Button::Listener,
@@ -24,6 +25,7 @@ private:
     EffectsPanel effectsPanel;
     LiveLoopPanel liveLoopPanel;
     SequencerPanel sequencerPanel;
+    SampleSlicerPanel sampleSlicerPanel;
     
     juce::TextButton loadButton;
     juce::TextButton playButton;

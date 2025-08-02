@@ -19,6 +19,7 @@ void AudioEngine::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
     effectsProcessor.prepareToPlay(sampleRate, samplesPerBlockExpected);
     liveLooper.prepareToPlay(samplesPerBlockExpected, sampleRate);
     sequencer.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    sampleSlicer.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void AudioEngine::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
@@ -31,6 +32,9 @@ void AudioEngine::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
     
     // Mix in sequencer
     sequencer.getNextAudioBlock(bufferToFill);
+    
+    // Mix in sample slicer
+    sampleSlicer.getNextAudioBlock(bufferToFill);
     
     // Apply effects if enabled
     if (effectsProcessor.isEffectEnabled())
@@ -46,6 +50,7 @@ void AudioEngine::releaseResources()
     effectsProcessor.releaseResources();
     liveLooper.releaseResources();
     sequencer.releaseResources();
+    sampleSlicer.releaseResources();
 }
 
 bool AudioEngine::loadAudioFile(const juce::File& file)

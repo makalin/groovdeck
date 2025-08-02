@@ -4,6 +4,9 @@
 #include "EffectsProcessor.h"
 #include "LiveLooper.h"
 #include "Sequencer.h"
+#include "SampleSlicer.h"
+#include "MIDIController.h"
+#include "ProjectManager.h"
 
 class AudioEngine : public juce::AudioSource
 {
@@ -36,6 +39,15 @@ public:
     
     // Sequencer access
     Sequencer& getSequencer() { return sequencer; }
+    
+    // Sample slicer access
+    SampleSlicer& getSampleSlicer() { return sampleSlicer; }
+    
+    // MIDI controller access
+    MIDIController& getMIDIController() { return midiController; }
+    
+    // Project manager access
+    ProjectManager& getProjectManager() { return projectManager; }
 
 private:
     std::unique_ptr<juce::AudioFormatReader> audioFileReader;
@@ -46,6 +58,9 @@ private:
     EffectsProcessor effectsProcessor;
     LiveLooper liveLooper;
     Sequencer sequencer;
+    SampleSlicer sampleSlicer;
+    MIDIController midiController;
+    ProjectManager projectManager;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 }; 
