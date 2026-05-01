@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <memory>
 #include "AudioEngine.h"
 #include "EffectsPanel.h"
 #include "LiveLoopPanel.h"
@@ -22,6 +23,8 @@ public:
 
 private:
     AudioEngine audioEngine;
+
+    std::unique_ptr<juce::FileChooser> audioFileChooser;
     EffectsPanel effectsPanel;
     LiveLoopPanel liveLoopPanel;
     SequencerPanel sequencerPanel;

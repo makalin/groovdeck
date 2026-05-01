@@ -1,55 +1,47 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 project(GroovDeck VERSION 0.1.0 LANGUAGES CXX)
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find JUCE
-find_package(JUCE REQUIRED)
+add_subdirectory(JUCE)
 
-# Add JUCE modules
-juce_add_module(JUCE/modules/juce_audio_basics)
-juce_add_module(JUCE/modules/juce_audio_devices)
-juce_add_module(JUCE/modules/juce_audio_formats)
-juce_add_module(JUCE/modules/juce_audio_processors)
-juce_add_module(JUCE/modules/juce_audio_utils)
-juce_add_module(JUCE/modules/juce_core)
-juce_add_module(JUCE/modules/juce_data_structures)
-juce_add_module(JUCE/modules/juce_events)
-juce_add_module(JUCE/modules/juce_graphics)
-juce_add_module(JUCE/modules/juce_gui_basics)
-juce_add_module(JUCE/modules/juce_gui_extra)
+file(GLOB_RECURSE GroovDeck_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-# Add source files
-file(GLOB_RECURSE SOURCES 
-    "src/*.cpp"
-    "src/*.h"
-)
-
-# Create executable
 juce_add_gui_app(GroovDeck
-    SOURCES ${SOURCES}
-)
+    PRODUCT_NAME "GroovDeck")
 
-# Link JUCE modules
+juce_generate_juce_header(GroovDeck)
+
+target_sources(GroovDeck PRIVATE ${GroovDeck_SOURCES})
+
+target_compile_definitions(GroovDeck
+    PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GroovDeck,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GroovDeck,JUCE_VERSION>")
+
 target_link_libraries(GroovDeck
     PRIVATE
-    juce::juce_audio_basics
-    juce::juce_audio_devices
-    juce::juce_audio_formats
-    juce::juce_audio_processors
-    juce::juce_audio_utils
-    juce::juce_core
-    juce::juce_data_structures
-    juce::juce_events
-    juce::juce_graphics
-    juce::juce_gui_basics
-    juce::juce_gui_extra
-)
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_formats
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_core
+        juce::juce_data_structures
+        juce::juce_dsp
+        juce::juce_events
+        juce::juce_graphics
+        juce::juce_gui_basics
+        juce::juce_gui_extra
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags)
 
-# Set properties for the target
 set_target_properties(GroovDeck PROPERTIES
     CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-) 
+    CXX_STANDARD_REQUIRED ON)

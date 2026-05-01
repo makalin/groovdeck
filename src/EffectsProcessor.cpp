@@ -1,53 +1,65 @@
 #include "EffectsProcessor.h"
 
 EffectsProcessor::EffectsProcessor()
-    : delayWritePosition(0), isEnabled(true)
+    : delayTimeSeconds(0.5f), delayFeedbackAmount(0.3f), delayWetMix(0.3f),
+      isEnabled(true)
 {
-    // Initialize delay buffer
-    delayBuffer.setSize(2, 44100 * 2); // 2 seconds at 44.1kHz
-    delayBuffer.clear();
+    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
 }
 
-EffectsProcessor::~EffectsProcessor()
-{
-}
+EffectsProcessor::~EffectsProcessor() = default;
 
 void EffectsProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // Prepare DSP modules
+    storedSampleRate = sampleRate;
+
     juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = samplesPerBlock;
+    spec.maximumBlockSize = (juce::uint32) juce::jmax(1, samplesPerBlock);
     spec.numChannels = 2;
 
     reverb.prepare(spec);
-    delay.prepare(spec);
     filter.prepare(spec);
     distortion.prepare(spec);
 
-    // Set default parameters
+    delayLine.prepare(spec);
+
+    const int maxDelaySamples = juce::roundToInt(sampleRate * 2.0) + 32;
+    delayLine.setMaximumDelayInSamples(juce::jmax(samplesPerBlock, maxDelaySamples));
+
+    delayLine.reset();
+    delayLine.setDelay(juce::jlimit(
+        1.0f,
+        juce::jmax(2.0f, (float) delayLine.getMaximumDelayInSamples() - 1.0f),
+        delayTimeSeconds * (float) sampleRate));
+
     setReverbParameters(0.5f, 0.5f, 0.33f, 0.67f);
-    setDelayParameters(0.5f, 0.3f, 0.3f);
+    setDelayParameters(delayTimeSeconds, delayFeedbackAmount, delayWetMix);
     setFilterParameters(1000.0f, 0.7f);
     setDistortionParameters(1.0f, 0.5f);
 }
 
 void EffectsProcessor::releaseResources()
 {
-    delayBuffer.clear();
+    delayLine.reset();
+    filter.reset();
 }
 
 void EffectsProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
-    if (!isEnabled)
+    if (! isEnabled)
+        return;
+
+    const unsigned nCh = juce::jmin((unsigned) buffer.getNumChannels(), 2u);
+    if (nCh < 1)
         return;
 
     juce::dsp::AudioBlock<float> block(buffer);
-    juce::dsp::ProcessContextReplacing<float> context(block);
+    auto stereo = block.getSubsetChannelBlock(0, (size_t) nCh);
+    juce::dsp::ProcessContextReplacing<float> context(stereo);
 
-    // Apply effects in series
     filter.process(context);
-    delay.process(context);
+    delayLine.process(context);
     reverb.process(context);
     distortion.process(context);
 }
@@ -62,11 +74,19 @@ void EffectsProcessor::setReverbParameters(float roomSize, float damping, float 
     reverb.setParameters(params);
 }
 
-void EffectsProcessor::setDelayParameters(float time, float feedback, float mix)
+void EffectsProcessor::setDelayParameters(float timeInSeconds, float feedback, float mix)
 {
-    delay.setDelay(time);
-    delay.setFeedback(feedback);
-    delay.setMix(mix);
+    juce::ignoreUnused(feedback, mix);
+
+    delayTimeSeconds = timeInSeconds;
+    delayFeedbackAmount = feedback;
+    delayWetMix = mix;
+
+    if (storedSampleRate > 0.0 && delayLine.getMaximumDelayInSamples() > 0)
+        delayLine.setDelay(juce::jlimit(
+            1.0f,
+            juce::jmax(2.0f, (float) delayLine.getMaximumDelayInSamples() - 1.0f),
+            delayTimeSeconds * (float) storedSampleRate));
 }
 
 void EffectsProcessor::setFilterParameters(float cutoff, float resonance)
@@ -77,5 +97,6 @@ void EffectsProcessor::setFilterParameters(float cutoff, float resonance)
 
 void EffectsProcessor::setDistortionParameters(float drive, float mix)
 {
+    juce::ignoreUnused(mix);
     distortion.setGainDecibels(drive * 24.0f);
-} 
+}

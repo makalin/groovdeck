@@ -40,13 +40,15 @@ public:
 
 private:
     juce::dsp::Reverb reverb;
-    juce::dsp::Delay<float> delay;
-    juce::dsp::StateVariableFilter::Filter<float> filter;
+    juce::dsp::DelayLine<float> delayLine;
+    juce::dsp::StateVariableTPTFilter<float> filter;
     juce::dsp::Gain<float> distortion;
 
-    juce::AudioBuffer<float> delayBuffer;
-    int delayWritePosition;
+    double storedSampleRate = 44100.0;
+    float delayTimeSeconds = 0.5f;
+    float delayFeedbackAmount = 0.3f;
+    float delayWetMix = 0.3f;
     bool isEnabled;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EffectsProcessor)
-}; 
+};

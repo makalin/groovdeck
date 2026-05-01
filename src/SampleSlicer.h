@@ -43,7 +43,7 @@ public:
     void setSliceSpeed(int index, float speed);
 
     // Slice management
-    int getNumSlices() const { return slices.size(); }
+    int getNumSlices() const { return (int) slices.size(); }
     const Slice& getSlice(int index) const;
     void setSliceActive(int index, bool active);
     void randomizeSliceOrder();

@@ -1,4 +1,5 @@
 #include "LiveLoopPanel.h"
+#include "GroovDeckLookAndFeel.h"
 
 LiveLoopPanel::LiveLoopPanel(LiveLooper& looper)
     : liveLooper(looper)
@@ -16,9 +17,18 @@ LiveLoopPanel::LiveLoopPanel(LiveLooper& looper)
     setupSlider(loopStartSlider, loopStartLabel, "Loop Start", 0.0, 30.0, 0.1, 0.0);
     setupSlider(loopEndSlider, loopEndLabel, "Loop End", 0.0, 30.0, 0.1, 4.0);
     
-    // Setup status label
     statusLabel.setText("Ready", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centred);
+    statusLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::accent());
+    statusLabel.setFont(juce::Font(juce::FontOptions(14.0f, juce::Font::bold)));
+
+    for (auto* s : { &loopLengthSlider, &loopGainSlider, &loopStartSlider, &loopEndSlider })
+        s->setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+
+    loopLengthSlider.setName("Length");
+    loopGainSlider.setName("Gain");
+    loopStartSlider.setName("Start");
+    loopEndSlider.setName("End");
     
     // Add components
     addAndMakeVisible(recordButton);
@@ -70,32 +80,48 @@ LiveLoopPanel::~LiveLoopPanel()
 
 void LiveLoopPanel::paint(juce::Graphics& g)
 {
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    GroovDeckLookAndFeel::drawModulePanel(g, getLocalBounds(), "Live looper");
 }
 
 void LiveLoopPanel::resized()
 {
-    auto area = getLocalBounds();
-    auto buttonHeight = 40;
-    auto margin = 10;
-    
-    // Control buttons
-    auto buttonArea = area.removeFromTop(buttonHeight * 2).reduced(margin);
-    recordButton.setBounds(buttonArea.removeFromTop(buttonHeight).reduced(5));
-    playButton.setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 4).reduced(5));
-    stopButton.setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 3).reduced(5));
-    clearButton.setBounds(buttonArea.removeFromLeft(buttonArea.getWidth() / 2).reduced(5));
-    reverseButton.setBounds(buttonArea.reduced(5));
-    
-    // Status display
-    statusLabel.setBounds(area.removeFromTop(30).reduced(margin));
-    
-    // Parameter sliders
-    auto sliderArea = area.removeFromTop(120).reduced(margin);
-    loopLengthSlider.setBounds(sliderArea.removeFromTop(30).reduced(5));
-    loopGainSlider.setBounds(sliderArea.removeFromTop(30).reduced(5));
-    loopStartSlider.setBounds(sliderArea.removeFromTop(30).reduced(5));
-    loopEndSlider.setBounds(sliderArea.removeFromTop(30).reduced(5));
+    auto a = getLocalBounds().reduced(12, 10);
+    a.removeFromTop(30);
+
+    const int gap = 6;
+    const int bh = 34;
+    int x = a.getX();
+    int y = a.getY();
+    const int fullW = a.getWidth();
+
+    recordButton.setBounds(x, y, fullW, bh);
+    y += bh + gap;
+
+    const int qw = (fullW - 3 * gap) / 4;
+    playButton.setBounds(x, y, qw, bh);
+    stopButton.setBounds(x + qw + gap, y, qw, bh);
+    clearButton.setBounds(x + 2 * (qw + gap), y, qw, bh);
+    reverseButton.setBounds(x + 3 * (qw + gap), y, qw, bh);
+    y += bh + gap;
+
+    statusLabel.setBounds(x, y, fullW, 28);
+    y += 28 + gap;
+
+    auto row = [&](juce::Label& lb, juce::Slider& sl)
+    {
+        const int lh = 26;
+        lb.setBounds(x, y, 108, lh);
+        sl.setBounds(x + 112, y, fullW - 116, lh);
+        y += lh + gap;
+    };
+
+    row(loopLengthLabel, loopLengthSlider);
+    row(loopGainLabel, loopGainSlider);
+    row(loopStartLabel, loopStartSlider);
+    row(loopEndLabel, loopEndSlider);
+
+    for (auto* lb : { &loopLengthLabel, &loopGainLabel, &loopStartLabel, &loopEndLabel })
+        lb->setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
 }
 
 void LiveLoopPanel::buttonClicked(juce::Button* button)

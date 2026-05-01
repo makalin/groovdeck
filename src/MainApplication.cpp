@@ -1,13 +1,22 @@
 #include "MainApplication.h"
+#include "MainComponent.h"
+#include "GroovDeckLookAndFeel.h"
 
 void MainApplication::initialise(const juce::String& commandLine)
 {
+    juce::ignoreUnused(commandLine);
+
+    lookAndFeel = std::make_unique<GroovDeckLookAndFeel>();
+    juce::LookAndFeel::setDefaultLookAndFeel(lookAndFeel.get());
+
     mainWindow.reset(new MainWindow(getApplicationName()));
 }
 
 void MainApplication::shutdown()
 {
     mainWindow = nullptr;
+    juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+    lookAndFeel.reset();
 }
 
 void MainApplication::systemRequestedQuit()
@@ -17,7 +26,7 @@ void MainApplication::systemRequestedQuit()
 
 void MainApplication::anotherInstanceStarted(const juce::String& commandLine)
 {
-    // Handle another instance being launched
+    juce::ignoreUnused(commandLine);
 }
 
 MainApplication::MainWindow::MainWindow(juce::String name)
@@ -28,7 +37,8 @@ MainApplication::MainWindow::MainWindow(juce::String name)
 {
     setUsingNativeTitleBar(true);
     setResizable(true, true);
-    centreWithSize(800, 600);
+    setContentOwned(new MainComponent(), true);
+    centreWithSize(1280, 900);
     setVisible(true);
 }
 

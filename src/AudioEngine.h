@@ -55,6 +55,7 @@ private:
     juce::AudioTransportSource transportSource;
     juce::AudioFormatManager formatManager;
     juce::AudioDeviceManager deviceManager;
+    juce::AudioSourcePlayer audioSourcePlayer;
     EffectsProcessor effectsProcessor;
     LiveLooper liveLooper;
     Sequencer sequencer;

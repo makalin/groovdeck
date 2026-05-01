@@ -38,7 +38,6 @@ private:
     // Labels
     juce::Label tempoLabel;
     juce::Label stepsLabel;
-    juce::Label sequencerLabel;
     
     void updateButtonStates();
     void updateStepButtons();

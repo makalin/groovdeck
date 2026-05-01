@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <memory>
 #include "SampleSlicer.h"
 
 class SampleSlicerPanel : public juce::Component,
@@ -48,7 +49,9 @@ private:
     juce::TextButton stopSliceButton;
     juce::Slider sliceGainSlider;
     juce::Label sliceGainLabel;
-    
+
+    std::unique_ptr<juce::FileChooser> sampleFileChooser;
+
     void loadSample();
     void updateSampleInfo();
     void updateSliceList();

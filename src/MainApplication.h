@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "GroovDeckLookAndFeel.h"
 
 class MainApplication : public juce::JUCEApplication
 {
@@ -29,5 +30,6 @@ public:
 
 private:
     std::unique_ptr<MainWindow> mainWindow;
+    std::unique_ptr<GroovDeckLookAndFeel> lookAndFeel;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainApplication)
 }; 

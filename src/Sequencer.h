@@ -31,6 +31,7 @@ public:
     void setSteps(int numSteps);
     
     // Step control
+    bool getStepActive(int step) const;
     void setStepActive(int step, bool active);
     void setStepVelocity(int step, float velocity);
     void setStepStartTime(int step, double startTime);

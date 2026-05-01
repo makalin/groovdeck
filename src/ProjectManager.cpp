@@ -1,7 +1,20 @@
 #include "ProjectManager.h"
 
+namespace
+{
+constexpr juce::int64 maxProjectFileBytes = 8 * 1024 * 1024;
+constexpr int maxJsonArrayElements = 2048;
+
+int cappedArraySize(const juce::var& arr)
+{
+    if (! arr.isArray())
+        return 0;
+    return juce::jmin(arr.size(), maxJsonArrayElements);
+}
+} // namespace
+
 ProjectManager::ProjectManager()
-    : autoSaveEnabled(false), autoSaveInterval(5)
+    : autoSaveEnabled(false)
 {
 }
 
@@ -118,20 +131,26 @@ void ProjectManager::performAutoSave()
     }
 }
 
-void ProjectManager::saveToFile(const juce::File& file, const ProjectData& data)
+bool ProjectManager::saveToFile(const juce::File& file, const ProjectData& data)
 {
     juce::var projectVar = projectDataToVar(data);
     juce::FileOutputStream stream(file);
-    if (stream.openedOk())
-    {
-        stream.setPosition(0);
-        stream.truncate();
-        stream.writeText(projectVar.toString(), false, false, "\n");
-    }
+
+    if (! stream.openedOk())
+        return false;
+
+    stream.setPosition(0);
+    stream.truncate();
+    stream.writeText(projectVar.toString(), false, false, "\n");
+
+    return true;
 }
 
 bool ProjectManager::loadFromFile(const juce::File& file, ProjectData& data)
 {
+    if (file.getSize() > maxProjectFileBytes)
+        return false;
+
     juce::String jsonString = file.loadFileAsString();
     juce::var projectVar = juce::JSON::parse(jsonString);
     
@@ -180,7 +199,7 @@ juce::var ProjectManager::projectDataToVar(const ProjectData& data)
     effectsObj->setProperty("distortionDrive", data.effects.distortionDrive);
     effectsObj->setProperty("distortionMix", data.effects.distortionMix);
     
-    obj->setProperty("effects", effectsObj);
+    obj->setProperty("effects", juce::var(effectsObj.get()));
     
     // Sequencer data
     juce::DynamicObject::Ptr sequencerObj = new juce::DynamicObject();
@@ -201,7 +220,7 @@ juce::var ProjectManager::projectDataToVar(const ProjectData& data)
     }
     sequencerObj->setProperty("stepVelocities", stepVelocitiesArray);
     
-    obj->setProperty("sequencer", sequencerObj);
+    obj->setProperty("sequencer", juce::var(sequencerObj.get()));
     
     // Looper data
     juce::DynamicObject::Ptr looperObj = new juce::DynamicObject();
@@ -211,7 +230,7 @@ juce::var ProjectManager::projectDataToVar(const ProjectData& data)
     looperObj->setProperty("loopEnd", data.looper.loopEnd);
     looperObj->setProperty("hasLoop", data.looper.hasLoop);
     
-    obj->setProperty("looper", looperObj);
+    obj->setProperty("looper", juce::var(looperObj.get()));
     
     // Slicer data
     juce::DynamicObject::Ptr slicerObj = new juce::DynamicObject();
@@ -238,9 +257,9 @@ juce::var ProjectManager::projectDataToVar(const ProjectData& data)
     }
     slicerObj->setProperty("sliceEndTimes", sliceEndTimesArray);
     
-    obj->setProperty("slicer", slicerObj);
-    
-    return obj;
+    obj->setProperty("slicer", juce::var(slicerObj.get()));
+
+    return juce::var(obj.get());
 }
 
 bool ProjectManager::varToProjectData(const juce::var& var, ProjectData& data)
@@ -262,17 +281,17 @@ bool ProjectManager::varToProjectData(const juce::var& var, ProjectData& data)
     if (audioFilesVar.isArray())
     {
         data.audioFiles.clear();
-        for (int i = 0; i < audioFilesVar.size(); ++i)
-        {
+        const int n = cappedArraySize(audioFilesVar);
+        for (int i = 0; i < n; ++i)
             data.audioFiles.add(audioFilesVar[i].toString());
-        }
     }
     
     // Effects settings
     juce::var effectsVar = obj->getProperty("effects");
     if (effectsVar.isObject())
     {
-        juce::DynamicObject::Ptr effectsObj = effectsVar.getDynamicObject();
+        if (auto* effectsObj = effectsVar.getDynamicObject())
+        {
         data.effects.reverbEnabled = effectsObj->getProperty("reverbEnabled");
         data.effects.reverbRoomSize = effectsObj->getProperty("reverbRoomSize");
         data.effects.reverbDamping = effectsObj->getProperty("reverbDamping");
@@ -291,13 +310,15 @@ bool ProjectManager::varToProjectData(const juce::var& var, ProjectData& data)
         data.effects.distortionEnabled = effectsObj->getProperty("distortionEnabled");
         data.effects.distortionDrive = effectsObj->getProperty("distortionDrive");
         data.effects.distortionMix = effectsObj->getProperty("distortionMix");
+        }
     }
     
     // Sequencer data
     juce::var sequencerVar = obj->getProperty("sequencer");
     if (sequencerVar.isObject())
     {
-        juce::DynamicObject::Ptr sequencerObj = sequencerVar.getDynamicObject();
+        if (auto* sequencerObj = sequencerVar.getDynamicObject())
+        {
         data.sequencer.numSteps = sequencerObj->getProperty("numSteps");
         data.sequencer.tempo = sequencerObj->getProperty("tempo");
         
@@ -305,20 +326,19 @@ bool ProjectManager::varToProjectData(const juce::var& var, ProjectData& data)
         if (stepStatesVar.isArray())
         {
             data.sequencer.stepStates.clear();
-            for (int i = 0; i < stepStatesVar.size(); ++i)
-            {
+            const int n = cappedArraySize(stepStatesVar);
+            for (int i = 0; i < n; ++i)
                 data.sequencer.stepStates.push_back(stepStatesVar[i]);
-            }
         }
         
         juce::var stepVelocitiesVar = sequencerObj->getProperty("stepVelocities");
         if (stepVelocitiesVar.isArray())
         {
             data.sequencer.stepVelocities.clear();
-            for (int i = 0; i < stepVelocitiesVar.size(); ++i)
-            {
+            const int n = cappedArraySize(stepVelocitiesVar);
+            for (int i = 0; i < n; ++i)
                 data.sequencer.stepVelocities.push_back(stepVelocitiesVar[i]);
-            }
+        }
         }
     }
     
@@ -326,49 +346,50 @@ bool ProjectManager::varToProjectData(const juce::var& var, ProjectData& data)
     juce::var looperVar = obj->getProperty("looper");
     if (looperVar.isObject())
     {
-        juce::DynamicObject::Ptr looperObj = looperVar.getDynamicObject();
+        if (auto* looperObj = looperVar.getDynamicObject())
+        {
         data.looper.loopLength = looperObj->getProperty("loopLength");
         data.looper.loopGain = looperObj->getProperty("loopGain");
         data.looper.loopStart = looperObj->getProperty("loopStart");
         data.looper.loopEnd = looperObj->getProperty("loopEnd");
         data.looper.hasLoop = looperObj->getProperty("hasLoop");
+        }
     }
     
     // Slicer data
     juce::var slicerVar = obj->getProperty("slicer");
     if (slicerVar.isObject())
     {
-        juce::DynamicObject::Ptr slicerObj = slicerVar.getDynamicObject();
+        if (auto* slicerObj = slicerVar.getDynamicObject())
+        {
         data.slicer.sampleFile = slicerObj->getProperty("sampleFile").toString();
         
         juce::var sliceNamesVar = slicerObj->getProperty("sliceNames");
         if (sliceNamesVar.isArray())
         {
             data.slicer.sliceNames.clear();
-            for (int i = 0; i < sliceNamesVar.size(); ++i)
-            {
+            const int n = cappedArraySize(sliceNamesVar);
+            for (int i = 0; i < n; ++i)
                 data.slicer.sliceNames.push_back(sliceNamesVar[i].toString());
-            }
         }
         
         juce::var sliceStartTimesVar = slicerObj->getProperty("sliceStartTimes");
         if (sliceStartTimesVar.isArray())
         {
             data.slicer.sliceStartTimes.clear();
-            for (int i = 0; i < sliceStartTimesVar.size(); ++i)
-            {
+            const int n = cappedArraySize(sliceStartTimesVar);
+            for (int i = 0; i < n; ++i)
                 data.slicer.sliceStartTimes.push_back(sliceStartTimesVar[i]);
-            }
         }
         
         juce::var sliceEndTimesVar = slicerObj->getProperty("sliceEndTimes");
         if (sliceEndTimesVar.isArray())
         {
             data.slicer.sliceEndTimes.clear();
-            for (int i = 0; i < sliceEndTimesVar.size(); ++i)
-            {
+            const int n = cappedArraySize(sliceEndTimesVar);
+            for (int i = 0; i < n; ++i)
                 data.slicer.sliceEndTimes.push_back(sliceEndTimesVar[i]);
-            }
+        }
         }
     }
     

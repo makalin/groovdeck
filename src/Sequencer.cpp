@@ -89,6 +89,11 @@ void Sequencer::setSteps(int steps)
     updateStepTime();
 }
 
+bool Sequencer::getStepActive(int step) const
+{
+    return step >= 0 && step < numSteps ? steps[(size_t) step].active : false;
+}
+
 void Sequencer::setStepActive(int step, bool active)
 {
     if (step >= 0 && step < numSteps)

@@ -4,12 +4,14 @@ AudioEngine::AudioEngine()
 {
     formatManager.registerBasicFormats();
     deviceManager.initialise(2, 2, nullptr, true);
-    deviceManager.addAudioCallback(this);
+    audioSourcePlayer.setSource(this);
+    deviceManager.addAudioCallback(&audioSourcePlayer);
 }
 
 AudioEngine::~AudioEngine()
 {
-    deviceManager.removeAudioCallback(this);
+    deviceManager.removeAudioCallback(&audioSourcePlayer);
+    audioSourcePlayer.setSource(nullptr);
     unloadAudioFile();
 }
 

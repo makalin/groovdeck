@@ -1,4 +1,5 @@
 #include "SequencerPanel.h"
+#include "GroovDeckLookAndFeel.h"
 
 SequencerPanel::SequencerPanel(Sequencer& seq)
     : sequencer(seq)
@@ -23,9 +24,13 @@ SequencerPanel::SequencerPanel(Sequencer& seq)
     setupSlider(tempoSlider, tempoLabel, "Tempo (BPM)", 60.0, 200.0, 1.0, 120.0);
     setupSlider(stepsSlider, stepsLabel, "Steps", 4.0, 16.0, 1.0, 16.0);
     
-    // Setup labels
-    sequencerLabel.setText("Sequencer", juce::dontSendNotification);
-    sequencerLabel.setJustificationType(juce::Justification::centred);
+    tempoSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+    stepsSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+    tempoSlider.setName("Tempo");
+    stepsSlider.setName("Steps");
+
+    for (auto* lb : { &tempoLabel, &stepsLabel })
+        lb->setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
     
     // Add components
     addAndMakeVisible(startButton);
@@ -45,7 +50,6 @@ SequencerPanel::SequencerPanel(Sequencer& seq)
     addAndMakeVisible(stepsSlider);
     addAndMakeVisible(tempoLabel);
     addAndMakeVisible(stepsLabel);
-    addAndMakeVisible(sequencerLabel);
     
     // Add listeners
     startButton.addListener(this);
@@ -90,47 +94,53 @@ SequencerPanel::~SequencerPanel()
 
 void SequencerPanel::paint(juce::Graphics& g)
 {
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    GroovDeckLookAndFeel::drawModulePanel(g, getLocalBounds(), "Step sequencer");
 }
 
 void SequencerPanel::resized()
 {
-    auto area = getLocalBounds();
-    auto buttonHeight = 30;
-    auto margin = 10;
-    
-    // Title
-    sequencerLabel.setBounds(area.removeFromTop(30).reduced(margin));
-    
-    // Control buttons
-    auto controlArea = area.removeFromTop(buttonHeight * 2).reduced(margin);
-    startButton.setBounds(controlArea.removeFromTop(buttonHeight).removeFromLeft(controlArea.getWidth() / 4).reduced(5));
-    stopButton.setBounds(controlArea.removeFromLeft(controlArea.getWidth() / 3).reduced(5));
-    resetButton.setBounds(controlArea.removeFromLeft(controlArea.getWidth() / 2).reduced(5));
-    clearButton.setBounds(controlArea.reduced(5));
-    
-    auto secondRow = controlArea.removeFromTop(buttonHeight);
-    randomButton.setBounds(secondRow.removeFromLeft(secondRow.getWidth() / 3).reduced(5));
-    shiftLeftButton.setBounds(secondRow.removeFromLeft(secondRow.getWidth() / 2).reduced(5));
-    shiftRightButton.setBounds(secondRow.reduced(5));
-    
-    // Parameters
-    auto paramArea = area.removeFromTop(60).reduced(margin);
-    tempoSlider.setBounds(paramArea.removeFromTop(30).reduced(5));
-    stepsSlider.setBounds(paramArea.removeFromTop(30).reduced(5));
-    
-    // Step buttons (4x4 grid)
-    auto stepArea = area.reduced(margin);
-    int buttonWidth = stepArea.getWidth() / 4;
-    int buttonHeight2 = stepArea.getHeight() / 4;
-    
+    auto a = getLocalBounds().reduced(12, 10);
+    a.removeFromTop(30);
+
+    const int gap = 6;
+    const int bh = 30;
+    int x = a.getX();
+    int y = a.getY();
+    const int w = a.getWidth();
+
+    const int q = (w - 3 * gap) / 4;
+    startButton.setBounds(x, y, q, bh);
+    stopButton.setBounds(x + q + gap, y, q, bh);
+    resetButton.setBounds(x + 2 * (q + gap), y, q, bh);
+    clearButton.setBounds(x + 3 * (q + gap), y, q, bh);
+    y += bh + gap;
+
+    const int t = (w - 2 * gap) / 3;
+    randomButton.setBounds(x, y, t, bh);
+    shiftLeftButton.setBounds(x + t + gap, y, t, bh);
+    shiftRightButton.setBounds(x + 2 * (t + gap), y, t, bh);
+    y += bh + gap;
+
+    const int lh = 26;
+    tempoLabel.setBounds(x, y, 96, lh);
+    tempoSlider.setBounds(x + 100, y, w - 104, lh);
+    y += lh + gap;
+    stepsLabel.setBounds(x, y, 96, lh);
+    stepsSlider.setBounds(x + 100, y, w - 104, lh);
+    y += lh + gap * 2;
+
+    auto stepArea = juce::Rectangle<int>(x, y, w, a.getBottom() - y);
+    const int bw = stepArea.getWidth() / 4;
+    const int bhh = juce::jmax(24, stepArea.getHeight() / 4);
+
     for (int i = 0; i < 16; ++i)
     {
-        int row = i / 4;
-        int col = i % 4;
-        stepButtons[i].setBounds(stepArea.getX() + col * buttonWidth,
-                                stepArea.getY() + row * buttonHeight2,
-                                buttonWidth - 2, buttonHeight2 - 2);
+        const int row = i / 4;
+        const int col = i % 4;
+        stepButtons[i].setBounds(stepArea.getX() + col * bw + 2,
+                                 stepArea.getY() + row * bhh + 2,
+                                 bw - 4,
+                                 bhh - 4);
     }
 }
 

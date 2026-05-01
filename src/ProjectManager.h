@@ -1,10 +1,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "AudioEngine.h"
-#include "LiveLooper.h"
-#include "Sequencer.h"
-#include "SampleSlicer.h"
 
 struct ProjectData
 {
@@ -103,6 +99,16 @@ struct ProjectData
 
 class ProjectManager
 {
+private:
+    struct AutoSaveTimer final : public juce::Timer
+    {
+        explicit AutoSaveTimer(ProjectManager& ownerIn) noexcept : owner(ownerIn) {}
+
+        void timerCallback() override { owner.performAutoSave(); }
+
+        ProjectManager& owner;
+    };
+
 public:
     ProjectManager();
     ~ProjectManager();
@@ -131,10 +137,10 @@ private:
     std::unique_ptr<ProjectData> currentProject;
     juce::File projectFile;
     bool autoSaveEnabled;
-    int autoSaveInterval;
-    juce::Timer autoSaveTimer;
+    int autoSaveInterval = 5;
+    AutoSaveTimer autoSaveTimer { *this };
     
-    void saveToFile(const juce::File& file, const ProjectData& data);
+    bool saveToFile(const juce::File& file, const ProjectData& data);
     bool loadFromFile(const juce::File& file, ProjectData& data);
     juce::var projectDataToVar(const ProjectData& data);
     bool varToProjectData(const juce::var& var, ProjectData& data);

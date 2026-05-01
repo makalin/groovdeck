@@ -1,4 +1,5 @@
 #include "MainComponent.h"
+#include "GroovDeckLookAndFeel.h"
 
 MainComponent::MainComponent()
     : effectsPanel(audioEngine),
@@ -6,19 +7,21 @@ MainComponent::MainComponent()
       sequencerPanel(audioEngine.getSequencer()),
       sampleSlicerPanel(audioEngine.getSampleSlicer())
 {
-    // Initialize buttons
-    loadButton.setButtonText("Load Audio");
+    loadButton.setButtonText("Load audio");
     playButton.setButtonText("Play");
     stopButton.setButtonText("Stop");
     loopButton.setButtonText("Loop");
-    
-    // Initialize volume slider
+
     volumeSlider.setRange(0.0, 1.0, 0.01);
     volumeSlider.setValue(1.0);
     volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-    volumeLabel.setText("Volume", juce::dontSendNotification);
-    
-    // Add components
+    volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 22);
+    volumeSlider.setName("Master");
+
+    volumeLabel.setText("Master", juce::dontSendNotification);
+    volumeLabel.setJustificationType(juce::Justification::centredRight);
+    volumeLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
+
     addAndMakeVisible(loadButton);
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
@@ -29,20 +32,18 @@ MainComponent::MainComponent()
     addAndMakeVisible(liveLoopPanel);
     addAndMakeVisible(sequencerPanel);
     addAndMakeVisible(sampleSlicerPanel);
-    
-    // Add listeners
+
     loadButton.addListener(this);
     playButton.addListener(this);
     stopButton.addListener(this);
     loopButton.addListener(this);
     volumeSlider.addListener(this);
-    
-    setSize(1400, 1200); // Increased size to accommodate all panels
+
+    setSize(1280, 900);
 }
 
 MainComponent::~MainComponent()
 {
-    // Remove listeners
     loadButton.removeListener(this);
     playButton.removeListener(this);
     stopButton.removeListener(this);
@@ -52,46 +53,58 @@ MainComponent::~MainComponent()
 
 void MainComponent::paint(juce::Graphics& g)
 {
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    auto r = getLocalBounds().toFloat();
+    juce::ColourGradient grad(GroovDeckLookAndFeel::background().brighter(0.04f), r.getCentreX(), r.getY(),
+                               GroovDeckLookAndFeel::background(), r.getCentreX(), r.getBottom(), false);
+    g.setGradientFill(grad);
+    g.fillRect(getLocalBounds());
+
+    g.setColour(GroovDeckLookAndFeel::border().withAlpha(0.35f));
+    g.drawLine(0.0f, 52.0f, (float) getWidth(), 52.0f, 1.0f);
 }
 
 void MainComponent::resized()
 {
-    auto area = getLocalBounds();
-    auto buttonHeight = 40;
-    auto margin = 10;
-    
-    // Transport controls at the top
-    auto transportArea = area.removeFromTop(buttonHeight * 2).reduced(margin);
-    loadButton.setBounds(transportArea.removeFromTop(buttonHeight).reduced(5));
-    playButton.setBounds(transportArea.removeFromLeft(transportArea.getWidth() / 4).reduced(5));
-    stopButton.setBounds(transportArea.removeFromLeft(transportArea.getWidth() / 3).reduced(5));
-    loopButton.setBounds(transportArea.removeFromLeft(transportArea.getWidth() / 2).reduced(5));
-    
-    auto volumeArea = transportArea.removeFromTop(buttonHeight).reduced(5);
-    volumeLabel.setBounds(volumeArea.removeFromLeft(100));
-    volumeSlider.setBounds(volumeArea);
-    
-    // Split remaining area into panels (2x2 grid)
-    auto panelHeight = area.getHeight() / 2;
-    auto panelWidth = area.getWidth() / 2;
-    
-    // Top row: Effects and Live Loop
-    auto topRow = area.removeFromTop(panelHeight);
-    effectsPanel.setBounds(topRow.removeFromLeft(panelWidth).reduced(margin));
-    liveLoopPanel.setBounds(topRow.reduced(margin));
-    
-    // Bottom row: Sequencer and Sample Slicer
-    sequencerPanel.setBounds(area.removeFromLeft(panelWidth).reduced(margin));
-    sampleSlicerPanel.setBounds(area.reduced(margin));
+    auto a = getLocalBounds().reduced(14);
+    const int headerH = 48;
+    auto header = a.removeFromTop(headerH);
+
+    const int gap = 8;
+    int x = header.getX();
+    const int y = header.getY();
+    const int bh = 36;
+
+    loadButton.setBounds(x, y, 118, bh);
+    x += 118 + gap;
+    playButton.setBounds(x, y, 80, bh);
+    x += 80 + gap;
+    stopButton.setBounds(x, y, 80, bh);
+    x += 80 + gap;
+    loopButton.setBounds(x, y, 88, bh);
+    x += 88 + gap * 2;
+
+    volumeLabel.setBounds(x, y, 56, bh);
+    x += 56 + gap;
+    volumeSlider.setBounds(x, y, juce::jmax(120, header.getRight() - x), bh);
+
+    a.removeFromTop(10);
+
+    const int rowH = a.getHeight() / 2;
+    const int colW = a.getWidth() / 2;
+    const int pad = 8;
+
+    auto topRow = a.removeFromTop(rowH);
+    effectsPanel.setBounds(topRow.removeFromLeft(colW).reduced(pad, 0));
+    liveLoopPanel.setBounds(topRow.reduced(pad, 0));
+
+    sequencerPanel.setBounds(a.removeFromLeft(colW).reduced(pad, 0));
+    sampleSlicerPanel.setBounds(a.reduced(pad, 0));
 }
 
 void MainComponent::buttonClicked(juce::Button* button)
 {
     if (button == &loadButton)
-    {
         loadAudioFile();
-    }
     else if (button == &playButton)
     {
         audioEngine.startPlayback();
@@ -103,37 +116,39 @@ void MainComponent::buttonClicked(juce::Button* button)
         updatePlayButtonState();
     }
     else if (button == &loopButton)
-    {
         audioEngine.setLooping(loopButton.getToggleState());
-    }
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &volumeSlider)
-    {
         audioEngine.setGain(static_cast<float>(volumeSlider.getValue()));
-    }
 }
 
 void MainComponent::loadAudioFile()
 {
-    juce::FileChooser chooser("Select an audio file...",
-                             juce::File::getSpecialLocation(juce::File::userHomeDirectory),
-                             "*.wav;*.mp3;*.aif;*.aiff;*.ogg;*.flac");
-    
-    if (chooser.browseForFileToOpen())
-    {
-        auto file = chooser.getResult();
-        if (audioEngine.loadAudioFile(file))
+    audioFileChooser = std::make_unique<juce::FileChooser>(
+        "Select an audio file",
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
+        "*.wav;*.mp3;*.aif;*.aiff;*.ogg;*.flac");
+
+    constexpr auto browserFlags =
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+
+    audioFileChooser->launchAsync(
+        browserFlags,
+        [this](const juce::FileChooser& chooser)
         {
-            updatePlayButtonState();
-        }
-    }
+            const juce::File file(chooser.getResult());
+            if (file.existsAsFile() && audioEngine.loadAudioFile(file))
+                updatePlayButtonState();
+
+            audioFileChooser = nullptr;
+        });
 }
 
 void MainComponent::updatePlayButtonState()
 {
     playButton.setEnabled(true);
     stopButton.setEnabled(true);
-} 
+}

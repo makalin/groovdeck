@@ -1,4 +1,5 @@
 #include "SampleSlicerPanel.h"
+#include "GroovDeckLookAndFeel.h"
 
 SampleSlicerPanel::SampleSlicerPanel(SampleSlicer& slicer)
     : sampleSlicer(slicer)
@@ -19,9 +20,16 @@ SampleSlicerPanel::SampleSlicerPanel(SampleSlicer& slicer)
     setupSlider(sensitivitySlider, sensitivityLabel, "Sensitivity", 0.1, 2.0, 0.1, 1.0);
     setupSlider(sliceGainSlider, sliceGainLabel, "Slice Gain", 0.0, 2.0, 0.01, 1.0);
     
-    // Setup labels
     sampleInfoLabel.setText("No sample loaded", juce::dontSendNotification);
     sampleInfoLabel.setJustificationType(juce::Justification::centred);
+    sampleInfoLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
+    sampleInfoLabel.setFont(juce::Font(juce::FontOptions(13.0f, juce::Font::italic)));
+
+    for (auto* s : { &sliceLengthSlider, &bpmSlider, &sensitivitySlider, &sliceGainSlider })
+        s->setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+
+    for (auto* lb : { &sliceLengthLabel, &bpmLabel, &sensitivityLabel, &sliceGainLabel })
+        lb->setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
     
     // Add components
     addAndMakeVisible(loadSampleButton);
@@ -80,41 +88,52 @@ SampleSlicerPanel::~SampleSlicerPanel()
 
 void SampleSlicerPanel::paint(juce::Graphics& g)
 {
-    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    GroovDeckLookAndFeel::drawModulePanel(g, getLocalBounds(), "Sample slicer");
 }
 
 void SampleSlicerPanel::resized()
 {
-    auto area = getLocalBounds();
-    auto buttonHeight = 30;
-    auto margin = 10;
-    
-    // Sample loading section
-    auto loadArea = area.removeFromTop(buttonHeight * 2).reduced(margin);
-    loadSampleButton.setBounds(loadArea.removeFromTop(buttonHeight).reduced(5));
-    unloadSampleButton.setBounds(loadArea.removeFromTop(buttonHeight).reduced(5));
-    
-    // Sample info
-    sampleInfoLabel.setBounds(area.removeFromTop(30).reduced(margin));
-    
-    // Slicing controls
-    auto sliceArea = area.removeFromTop(buttonHeight * 2).reduced(margin);
-    autoSliceButton.setBounds(sliceArea.removeFromTop(buttonHeight).removeFromLeft(sliceArea.getWidth() / 2).reduced(5));
-    beatSliceButton.setBounds(sliceArea.removeFromLeft(sliceArea.getWidth() / 2).reduced(5));
-    transientSliceButton.setBounds(sliceArea.removeFromLeft(sliceArea.getWidth() / 2).reduced(5));
-    clearSlicesButton.setBounds(sliceArea.reduced(5));
-    
-    // Parameters
-    auto paramArea = area.removeFromTop(120).reduced(margin);
-    sliceLengthSlider.setBounds(paramArea.removeFromTop(30).reduced(5));
-    bpmSlider.setBounds(paramArea.removeFromTop(30).reduced(5));
-    sensitivitySlider.setBounds(paramArea.removeFromTop(30).reduced(5));
-    sliceGainSlider.setBounds(paramArea.removeFromTop(30).reduced(5));
-    
-    // Slice playback controls
-    auto playbackArea = area.removeFromTop(buttonHeight).reduced(margin);
-    playSliceButton.setBounds(playbackArea.removeFromLeft(playbackArea.getWidth() / 2).reduced(5));
-    stopSliceButton.setBounds(playbackArea.reduced(5));
+    auto a = getLocalBounds().reduced(12, 10);
+    a.removeFromTop(30);
+
+    const int gap = 6;
+    const int bh = 30;
+    int x = a.getX();
+    int y = a.getY();
+    const int w = a.getWidth();
+
+    const int hw = (w - gap) / 2;
+    loadSampleButton.setBounds(x, y, hw, bh);
+    unloadSampleButton.setBounds(x + hw + gap, y, hw, bh);
+    y += bh + gap;
+
+    sampleInfoLabel.setBounds(x, y, w, 28);
+    y += 28 + gap;
+
+    const int qw = (w - 3 * gap) / 4;
+    autoSliceButton.setBounds(x, y, qw, bh);
+    beatSliceButton.setBounds(x + qw + gap, y, qw, bh);
+    transientSliceButton.setBounds(x + 2 * (qw + gap), y, qw, bh);
+    clearSlicesButton.setBounds(x + 3 * (qw + gap), y, qw, bh);
+    y += bh + gap;
+
+    const int lh = 26;
+    auto row = [&](juce::Label& lb, juce::Slider& sl)
+    {
+        lb.setBounds(x, y, 100, lh);
+        sl.setBounds(x + 104, y, w - 108, lh);
+        y += lh + gap;
+    };
+
+    row(sliceLengthLabel, sliceLengthSlider);
+    row(bpmLabel, bpmSlider);
+    row(sensitivityLabel, sensitivitySlider);
+    row(sliceGainLabel, sliceGainSlider);
+
+    y += gap;
+    const int pw = (w - gap) / 2;
+    playSliceButton.setBounds(x, y, pw, bh);
+    stopSliceButton.setBounds(x + pw + gap, y, pw, bh);
 }
 
 void SampleSlicerPanel::buttonClicked(juce::Button* button)
@@ -168,18 +187,23 @@ void SampleSlicerPanel::sliderValueChanged(juce::Slider* slider)
 
 void SampleSlicerPanel::loadSample()
 {
-    juce::FileChooser chooser("Select a sample file...",
-                             juce::File::getSpecialLocation(juce::File::userHomeDirectory),
-                             "*.wav;*.mp3;*.aif;*.aiff;*.ogg;*.flac");
-    
-    if (chooser.browseForFileToOpen())
-    {
-        auto file = chooser.getResult();
-        if (sampleSlicer.loadSample(file))
+    sampleFileChooser = std::make_unique<juce::FileChooser>(
+        "Select a sample file...",
+        juce::File::getSpecialLocation(juce::File::userHomeDirectory),
+        "*.wav;*.mp3;*.aif;*.aiff;*.ogg;*.flac");
+
+    constexpr auto browserFlags =
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+
+    sampleFileChooser->launchAsync(
+        browserFlags,
+        [this](const juce::FileChooser& chooser)
         {
-            updateSampleInfo();
-        }
-    }
+            const juce::File file(chooser.getResult());
+            if (file.existsAsFile() && sampleSlicer.loadSample(file))
+                updateSampleInfo();
+            sampleFileChooser = nullptr;
+        });
 }
 
 void SampleSlicerPanel::updateSampleInfo()
@@ -189,10 +213,14 @@ void SampleSlicerPanel::updateSampleInfo()
         juce::String info = "Sample: " + juce::String(sampleSlicer.getSampleLength(), 2) + "s, ";
         info += juce::String(sampleSlicer.getNumSlices()) + " slices";
         sampleInfoLabel.setText(info, juce::dontSendNotification);
+        sampleInfoLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::text());
+        sampleInfoLabel.setFont(juce::Font(juce::FontOptions(13.0f)));
     }
     else
     {
         sampleInfoLabel.setText("No sample loaded", juce::dontSendNotification);
+        sampleInfoLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
+        sampleInfoLabel.setFont(juce::Font(juce::FontOptions(13.0f, juce::Font::italic)));
     }
 }
 
