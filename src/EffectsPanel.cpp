@@ -5,7 +5,7 @@ namespace
 {
 void styleValueSlider(juce::Slider& s)
 {
-    s.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+    s.setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 14);
     s.setSliderSnapsToMousePosition(false);
 }
 }
@@ -111,29 +111,48 @@ void EffectsPanel::paint(juce::Graphics& g)
 
 void EffectsPanel::resized()
 {
-    auto a = getLocalBounds().reduced(12, 10);
-    a.removeFromTop(30);
+    auto a = getLocalBounds().reduced(5, 3);
+    a.removeFromTop(17);
 
-    const int rowH = 30;
-    const int gap = 6;
-    const int toggleH = 28;
+    const int g = 2;
+    const int th = 15;
+    const int sh = 15;
 
-    auto laySection = [&](juce::ToggleButton& toggle, std::initializer_list<juce::Slider*> sliders)
+    auto toggleRow = [&](juce::ToggleButton& t)
     {
-        toggle.setBounds(a.getX(), a.getY(), 140, toggleH);
-        a.removeFromTop(toggleH + gap);
-        for (auto* s : sliders)
-        {
-            s->setBounds(a.removeFromTop(rowH).reduced(0, 2));
-            a.removeFromTop(2);
-        }
-        a.removeFromTop(8);
+        t.setBounds(a.getX(), a.getY(), 88, th);
+        a.removeFromTop(th + g);
     };
 
-    laySection(reverbToggle, { &reverbRoomSize, &reverbDamping, &reverbWetLevel, &reverbDryLevel });
-    laySection(delayToggle, { &delayTime, &delayFeedback, &delayMix });
-    laySection(filterToggle, { &filterCutoff, &filterResonance });
-    laySection(distortionToggle, { &distortionDrive, &distortionMix });
+    auto pairRow = [&](juce::Slider& left, juce::Slider& right)
+    {
+        auto row = a.removeFromTop(sh + g);
+        const int half = (row.getWidth() - g) / 2;
+        left.setBounds(row.getX(), row.getY(), half, sh);
+        right.setBounds(row.getX() + half + g, row.getY(), half, sh);
+    };
+
+    auto singleRow = [&](juce::Slider& s)
+    {
+        s.setBounds(a.removeFromTop(sh + g));
+    };
+
+    toggleRow(reverbToggle);
+    pairRow(reverbRoomSize, reverbDamping);
+    pairRow(reverbWetLevel, reverbDryLevel);
+    a.removeFromTop(2);
+
+    toggleRow(delayToggle);
+    pairRow(delayTime, delayFeedback);
+    singleRow(delayMix);
+    a.removeFromTop(2);
+
+    toggleRow(filterToggle);
+    pairRow(filterCutoff, filterResonance);
+    a.removeFromTop(2);
+
+    toggleRow(distortionToggle);
+    pairRow(distortionDrive, distortionMix);
 }
 
 void EffectsPanel::sliderValueChanged(juce::Slider* slider)

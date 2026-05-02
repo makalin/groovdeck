@@ -24,13 +24,16 @@ SequencerPanel::SequencerPanel(Sequencer& seq)
     setupSlider(tempoSlider, tempoLabel, "Tempo (BPM)", 60.0, 200.0, 1.0, 120.0);
     setupSlider(stepsSlider, stepsLabel, "Steps", 4.0, 16.0, 1.0, 16.0);
     
-    tempoSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
-    stepsSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+    tempoSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 14);
+    stepsSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 14);
     tempoSlider.setName("Tempo");
     stepsSlider.setName("Steps");
 
     for (auto* lb : { &tempoLabel, &stepsLabel })
+    {
         lb->setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
+        lb->setFont(juce::Font(juce::FontOptions(9.0f)));
+    }
     
     // Add components
     addAndMakeVisible(startButton);
@@ -99,11 +102,11 @@ void SequencerPanel::paint(juce::Graphics& g)
 
 void SequencerPanel::resized()
 {
-    auto a = getLocalBounds().reduced(12, 10);
-    a.removeFromTop(30);
+    auto a = getLocalBounds().reduced(5, 3);
+    a.removeFromTop(17);
 
-    const int gap = 6;
-    const int bh = 30;
+    const int gap = 3;
+    const int bh = 22;
     int x = a.getX();
     int y = a.getY();
     const int w = a.getWidth();
@@ -121,26 +124,26 @@ void SequencerPanel::resized()
     shiftRightButton.setBounds(x + 2 * (t + gap), y, t, bh);
     y += bh + gap;
 
-    const int lh = 26;
-    tempoLabel.setBounds(x, y, 96, lh);
-    tempoSlider.setBounds(x + 100, y, w - 104, lh);
+    const int lh = 15;
+    tempoLabel.setBounds(x, y, 56, lh);
+    tempoSlider.setBounds(x + 58, y, w - 60, lh);
     y += lh + gap;
-    stepsLabel.setBounds(x, y, 96, lh);
-    stepsSlider.setBounds(x + 100, y, w - 104, lh);
-    y += lh + gap * 2;
+    stepsLabel.setBounds(x, y, 56, lh);
+    stepsSlider.setBounds(x + 58, y, w - 60, lh);
+    y += lh + gap;
 
     auto stepArea = juce::Rectangle<int>(x, y, w, a.getBottom() - y);
     const int bw = stepArea.getWidth() / 4;
-    const int bhh = juce::jmax(24, stepArea.getHeight() / 4);
+    const int bhh = juce::jmax(12, stepArea.getHeight() / 4);
 
     for (int i = 0; i < 16; ++i)
     {
         const int row = i / 4;
         const int col = i % 4;
-        stepButtons[i].setBounds(stepArea.getX() + col * bw + 2,
-                                 stepArea.getY() + row * bhh + 2,
-                                 bw - 4,
-                                 bhh - 4);
+        stepButtons[i].setBounds(stepArea.getX() + col * bw + 1,
+                                 stepArea.getY() + row * bhh + 1,
+                                 bw - 2,
+                                 bhh - 2);
     }
 }
 

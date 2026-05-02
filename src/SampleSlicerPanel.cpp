@@ -5,14 +5,14 @@ SampleSlicerPanel::SampleSlicerPanel(SampleSlicer& slicer)
     : sampleSlicer(slicer)
 {
     // Setup buttons
-    loadSampleButton.setButtonText("Load Sample");
-    unloadSampleButton.setButtonText("Unload Sample");
-    autoSliceButton.setButtonText("Auto Slice");
-    beatSliceButton.setButtonText("Beat Slice");
-    transientSliceButton.setButtonText("Transient Slice");
-    clearSlicesButton.setButtonText("Clear Slices");
-    playSliceButton.setButtonText("Play Slice");
-    stopSliceButton.setButtonText("Stop Slice");
+    loadSampleButton.setButtonText("Load");
+    unloadSampleButton.setButtonText("Unload");
+    autoSliceButton.setButtonText("Auto");
+    beatSliceButton.setButtonText("Beat");
+    transientSliceButton.setButtonText("Transient");
+    clearSlicesButton.setButtonText("Clear");
+    playSliceButton.setButtonText("Play");
+    stopSliceButton.setButtonText("Stop");
     
     // Setup sliders
     setupSlider(sliceLengthSlider, sliceLengthLabel, "Slice Length", 0.1, 5.0, 0.1, 1.0);
@@ -23,13 +23,16 @@ SampleSlicerPanel::SampleSlicerPanel(SampleSlicer& slicer)
     sampleInfoLabel.setText("No sample loaded", juce::dontSendNotification);
     sampleInfoLabel.setJustificationType(juce::Justification::centred);
     sampleInfoLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
-    sampleInfoLabel.setFont(juce::Font(juce::FontOptions(13.0f, juce::Font::italic)));
+    sampleInfoLabel.setFont(juce::Font(juce::FontOptions(9.0f, juce::Font::italic)));
 
     for (auto* s : { &sliceLengthSlider, &bpmSlider, &sensitivitySlider, &sliceGainSlider })
-        s->setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+        s->setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 14);
 
     for (auto* lb : { &sliceLengthLabel, &bpmLabel, &sensitivityLabel, &sliceGainLabel })
+    {
         lb->setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
+        lb->setFont(juce::Font(juce::FontOptions(9.0f)));
+    }
     
     // Add components
     addAndMakeVisible(loadSampleButton);
@@ -93,11 +96,11 @@ void SampleSlicerPanel::paint(juce::Graphics& g)
 
 void SampleSlicerPanel::resized()
 {
-    auto a = getLocalBounds().reduced(12, 10);
-    a.removeFromTop(30);
+    auto a = getLocalBounds().reduced(5, 3);
+    a.removeFromTop(17);
 
-    const int gap = 6;
-    const int bh = 30;
+    const int gap = 3;
+    const int bh = 22;
     int x = a.getX();
     int y = a.getY();
     const int w = a.getWidth();
@@ -107,8 +110,8 @@ void SampleSlicerPanel::resized()
     unloadSampleButton.setBounds(x + hw + gap, y, hw, bh);
     y += bh + gap;
 
-    sampleInfoLabel.setBounds(x, y, w, 28);
-    y += 28 + gap;
+    sampleInfoLabel.setBounds(x, y, w, 18);
+    y += 18 + gap;
 
     const int qw = (w - 3 * gap) / 4;
     autoSliceButton.setBounds(x, y, qw, bh);
@@ -117,11 +120,11 @@ void SampleSlicerPanel::resized()
     clearSlicesButton.setBounds(x + 3 * (qw + gap), y, qw, bh);
     y += bh + gap;
 
-    const int lh = 26;
+    const int lh = 15;
     auto row = [&](juce::Label& lb, juce::Slider& sl)
     {
-        lb.setBounds(x, y, 100, lh);
-        sl.setBounds(x + 104, y, w - 108, lh);
+        lb.setBounds(x, y, 72, lh);
+        sl.setBounds(x + 74, y, w - 78, lh);
         y += lh + gap;
     };
 
@@ -214,13 +217,13 @@ void SampleSlicerPanel::updateSampleInfo()
         info += juce::String(sampleSlicer.getNumSlices()) + " slices";
         sampleInfoLabel.setText(info, juce::dontSendNotification);
         sampleInfoLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::text());
-        sampleInfoLabel.setFont(juce::Font(juce::FontOptions(13.0f)));
+        sampleInfoLabel.setFont(juce::Font(juce::FontOptions(9.0f)));
     }
     else
     {
         sampleInfoLabel.setText("No sample loaded", juce::dontSendNotification);
         sampleInfoLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::textMuted());
-        sampleInfoLabel.setFont(juce::Font(juce::FontOptions(13.0f, juce::Font::italic)));
+        sampleInfoLabel.setFont(juce::Font(juce::FontOptions(9.0f, juce::Font::italic)));
     }
 }
 

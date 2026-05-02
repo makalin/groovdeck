@@ -2,12 +2,18 @@
 
 #include <JuceHeader.h>
 
-/** Dark DAW-style look used across GroovDeck. */
+/** DAW-style look used across GroovDeck; supports multiple themes via applyTheme(). */
 class GroovDeckLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
     GroovDeckLookAndFeel();
-    ~GroovDeckLookAndFeel() override = default;
+    ~GroovDeckLookAndFeel() override;
+
+    /** 0 Midnight, 1 Ocean, 2 Ember, 3 Dawn (light). */
+    void applyTheme(int themeIndex);
+    int getCurrentTheme() const { return currentTheme; }
+
+    static juce::StringArray getThemeNames();
 
     static juce::Colour background();
     static juce::Colour surface();
@@ -35,7 +41,15 @@ public:
                           bool shouldDrawButtonAsDown) override;
 
     juce::Font getLabelFont(juce::Label& label) override;
+    juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override;
 
 private:
+    void syncColoursFromPalette();
+    int currentTheme = 0;
+
+    juce::Colour cBackground, cSurface, cSurfaceElevated, cBorder, cAccent, cAccentMuted, cText, cTextMuted;
+
+    static GroovDeckLookAndFeel* activeInstance;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GroovDeckLookAndFeel)
 };

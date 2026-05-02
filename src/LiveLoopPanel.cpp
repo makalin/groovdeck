@@ -20,10 +20,10 @@ LiveLoopPanel::LiveLoopPanel(LiveLooper& looper)
     statusLabel.setText("Ready", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centred);
     statusLabel.setColour(juce::Label::textColourId, GroovDeckLookAndFeel::accent());
-    statusLabel.setFont(juce::Font(juce::FontOptions(14.0f, juce::Font::bold)));
+    statusLabel.setFont(juce::Font(juce::FontOptions(10.0f, juce::Font::bold)));
 
     for (auto* s : { &loopLengthSlider, &loopGainSlider, &loopStartSlider, &loopEndSlider })
-        s->setTextBoxStyle(juce::Slider::TextBoxRight, false, 52, 20);
+        s->setTextBoxStyle(juce::Slider::TextBoxRight, false, 36, 14);
 
     loopLengthSlider.setName("Length");
     loopGainSlider.setName("Gain");
@@ -85,11 +85,11 @@ void LiveLoopPanel::paint(juce::Graphics& g)
 
 void LiveLoopPanel::resized()
 {
-    auto a = getLocalBounds().reduced(12, 10);
-    a.removeFromTop(30);
+    auto a = getLocalBounds().reduced(5, 3);
+    a.removeFromTop(17);
 
-    const int gap = 6;
-    const int bh = 34;
+    const int gap = 3;
+    const int bh = 24;
     int x = a.getX();
     int y = a.getY();
     const int fullW = a.getWidth();
@@ -104,14 +104,15 @@ void LiveLoopPanel::resized()
     reverseButton.setBounds(x + 3 * (qw + gap), y, qw, bh);
     y += bh + gap;
 
-    statusLabel.setBounds(x, y, fullW, 28);
-    y += 28 + gap;
+    statusLabel.setBounds(x, y, fullW, 18);
+    y += 18 + gap;
 
     auto row = [&](juce::Label& lb, juce::Slider& sl)
     {
-        const int lh = 26;
-        lb.setBounds(x, y, 108, lh);
-        sl.setBounds(x + 112, y, fullW - 116, lh);
+        const int lh = 15;
+        lb.setBounds(x, y, 72, lh);
+        lb.setFont(juce::Font(juce::FontOptions(9.0f)));
+        sl.setBounds(x + 74, y, fullW - 78, lh);
         y += lh + gap;
     };
 

@@ -21,7 +21,7 @@ public:
     class MainWindow : public juce::DocumentWindow
     {
     public:
-        MainWindow(juce::String name);
+        MainWindow (juce::String name, GroovDeckLookAndFeel& laf, juce::ApplicationProperties& props);
         void closeButtonPressed() override;
 
     private:
@@ -31,5 +31,6 @@ public:
 private:
     std::unique_ptr<MainWindow> mainWindow;
     std::unique_ptr<GroovDeckLookAndFeel> lookAndFeel;
+    juce::ApplicationProperties appProperties;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainApplication)
 }; 
